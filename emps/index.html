@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Management System Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f6f7; color: #333; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        h2 { border-bottom: 2px solid #ddd; padding-bottom: 8px; color: #2c3e50; }
+        input, button { padding: 10px; margin: 5px 0; display: block; width: 100%; max-width: 300px; box-sizing: border-box; }
+        button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #219653; }
+        .delete-btn { background-color: #c0392b; }
+        .delete-btn:hover { background-color: #962d22; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #34495e; color: white; }
+    </style>
+</head>
+<body>
+
+    <h1>Employee Management System CRUD Dashboard</h1>
+
+    <div class="box">
+        <h2>Add New Employee (POST /api/v1/employees)</h2>
+        <input type="text" id="emp-name" placeholder="Full Name">
+        <input type="text" id="emp-dept" placeholder="Department">
+        <input type="number" id="emp-salary" placeholder="Salary (USD)">
+        <button onclick="createEmployee()">Submit POST Request</button>
+    </div>
+
+    <div class="box">
+        <h2>Active Employees Matrix (GET /api/v1/employees)</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="filter-dept" placeholder="Filter by Department Query" style="margin:0;">
+            <button onclick="loadEmployees()" style="width:150px; margin:0; background-color:#3498db;">Fetch Data</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID (Path)</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Salary</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employee-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8000/api/v1/employees";
+
+        // GET READ PIPELINE LOOP
+        async function loadEmployees() {
+            const filterDept = document.getElementById('filter-dept').value;
+            let url = API_BASE;
+            
+            // Check if Query Parameters need appending
+            if (filterDept) {
+                url += `?department=${encodeURIComponent(filterDept)}`;
+            }
+
+            const response = await fetch(url);
+            const employees = await response.json();
+            
+            const tbody = document.getElementById('employee-table-body');
+            tbody.innerHTML = ""; // Wipe baseline DOM content
+
+            employees.forEach(emp => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${emp.id}</strong></td>
+                        <td><input type="text" id="name-${emp.id}" value="${emp.name}"></td>
+                        <td><input type="text" id="dept-${emp.id}" value="${emp.department}"></td>
+                        <td><input type="number" id="salary-${emp.id}" value="${emp.salary}"></td>
+                        <td>
+                            <button onclick="updateEmployee(${emp.id})" style="background-color:#f39c12; display:inline-block; width:auto; padding:5px 10px; margin-right:5px;">PUT</button>
+                            <button onclick="deleteEmployee(${emp.id})" class="delete-btn" style="display:inline-block; width:auto; padding:5px 10px;">DELETE</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // POST CREATE PIPELINE
+        async function createEmployee() {
+            const name = document.getElementById('emp-name').value;
+            const department = document.getElementById('emp-dept').value;
+            const salary = document.getElementById('emp-salary').value;
+
+            await fetch(API_BASE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: json = JSON.stringify({ name, department, salary })
+            });
+
+            // Reset Input Values inside the DOM Form
+            document.getElementById('emp-name').value = '';
+            document.getElementById('emp-dept').value = '';
+            document.getElementById('emp-salary').value = '';
+            loadEmployees(); // Reload the data view
+        }
+
+        // PUT UPDATE PIPELINE
+        async function updateEmployee(id) {
+            const name = document.getElementById(`name-${id}`).value;
+            const department = document.getElementById(`dept-${id}`).value;
+            const salary = document.getElementById(`salary-${id}`).value;
+
+            await fetch(`${API_BASE}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, department, salary })
+            });
+            alert(`Employee #${id} updated successfully inside database.`);
+            loadEmployees();
+        }
+
+        // DELETE DESTROY PIPELINE
+        async function deleteEmployee(id) {
+            if (confirm(`Are you certain you want to execute DELETE against Employee ID ${id}?`)) {
+                await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+                loadEmployees();
+            }
+        }
+
+        // Initial Load on opening page
+        window.onload = loadEmployees;
+    </script>
+</body>
+</html>

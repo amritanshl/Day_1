@@ -12,7 +12,7 @@ print("Initializing robot browser...")
 driver = webdriver.Chrome()
 
 # 3. Tell our automated browser to visit a webpage
-driver.get("https://acme-test.uipath.com/")
+driver.get("file:///Users/amritansh/Downloads/gemini-code-1780477875258.html")
 
 # Print out the webpage's title to verify we are there
 print(f"Successfully reached: {driver.title}")
